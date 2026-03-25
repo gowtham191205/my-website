@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NexusHR — Software Personnel Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════════════════════════════
+   NEXUSHR — GLOBAL VARIABLES & RESET
+════════════════════════════════════════════════ */
+:root {
+  --bg: #060910;
+  --bg2: #0d1117;
+  --surface: #111827;
+  --surface2: #1a2236;
+  --border: #1e2d42;
+  --border2: #263548;
+  --accent: #00e5ff;
+  --accent-dim: rgba(0,229,255,0.12);
+  --accent2: #7c3aed;
+  --accent3: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --muted: #4a5568;
+  --mono: 'Space Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --sans: 'DM Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ════════════════════════════════════════════════
+   PAGES CONTROLLER
+════════════════════════════════════════════════ */
+.app-page { display: none; min-height: 100vh; }
+.app-page.active { display: flex; }
+
+/* ════════════════════════════════════════════════
+   AUTH LAYOUT — shared by login + register
+════════════════════════════════════════════════ */
+.auth-page {
+  width: 100%; min-height: 100vh;
+  display: flex; align-items: stretch;
+}
+
+/* ── LEFT PANEL ── */
+.auth-left {
+  flex: 1.1;
+  background: var(--bg2);
+  position: relative;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: flex-start;
+  padding: 64px 72px;
+  overflow: hidden;
+}
+.auth-left::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0,229,255,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 20%, rgba(124,58,237,0.08) 0%, transparent 70%);
+}
+/* Grid texture */
+.auth-left::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.auth-left-content { position: relative; z-index: 2; }
+
+.auth-logo {
+  font-family: var(--mono);
+  font-size: 22px;
+  color: var(--accent);
+  margin-bottom: 64px;
+  display: flex; align-items: center; gap: 10px;
+}
+.auth-logo .logo-dot { color: var(--accent2); }
+.auth-logo-badge {
+  font-size: 9px; background: var(--accent-dim); border: 1px solid rgba(0,229,255,0.2);
+  color: var(--accent); padding: 3px 8px; border-radius: 3px; letter-spacing: 1.5px;
+  text-transform: uppercase; font-family: var(--mono); margin-left: 4px;
+}
+
+.auth-headline {
+  font-family: var(--display);
+  font-size: clamp(32px, 3.5vw, 48px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  max-width: 460px;
+}
+.auth-headline em { font-style: normal; color: var(--accent); }
+.auth-headline .line2 { color: var(--text2); font-weight: 500; }
+
+.auth-sub {
+  font-size: 15px; color: var(--text2); line-height: 1.7;
+  max-width: 400px; margin-bottom: 52px;
+}
+
+.auth-features { display: flex; flex-direction: column; gap: 16px; }
+.auth-feature {
+  display: flex; align-items: flex-start; gap: 14px;
+  animation: fadeSlideUp 0.5s ease both;
+}
+.auth-feature:nth-child(1) { animation-delay: 0.1s; }
+.auth-feature:nth-child(2) { animation-delay: 0.2s; }
+.auth-feature:nth-child(3) { animation-delay: 0.3s; }
+.auth-feature:nth-child(4) { animation-delay: 0.4s; }
+.feat-icon {
+  width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  background: var(--surface); border: 1px solid var(--border2);
+}
+.feat-text { padding-top: 2px; }
+.feat-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.feat-desc { font-size: 12px; color: var(--muted); }
+
+/* bottom stats bar */
+.auth-stats {
+  display: flex; gap: 32px; margin-top: 56px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.auth-stat-val {
+  font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent);
+}
+.auth-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* floating code snippet */
+.code-snippet {
+  position: absolute; bottom: 48px; right: -10px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 16px 20px;
+  font-family: var(--mono); font-size: 11px; line-height: 1.8;
+  max-width: 320px; z-index: 3;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.cs-comment { color: var(--muted); }
+.cs-key { color: #a78bfa; }
+.cs-str { color: #fcd34d; }
+.cs-fn { color: var(--accent); }
+.cs-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.cs-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+/* ── RIGHT PANEL ── */
+.auth-right {
+  width: 480px; flex-shrink: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 52px 52px;
+  border-left: 1px solid var(--border);
+  position: relative;
+}
+.auth-right::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.3;
+}
+
+.form-header { margin-bottom: 36px; }
+.form-header h2 {
+  font-family: var(--display);
+  font-size: 26px; font-weight: 800;
+  letter-spacing: -0.5px; margin-bottom: 8px;
+}
+.form-header p { font-size: 14px; color: var(--text2); }
+
+.form-divider {
+  display: flex; align-items: center; gap: 14px;
+  margin: 20px 0;
+}
+.form-divider span { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.form-divider::before, .form-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Input groups */
+.inp-group { margin-bottom: 18px; }
+.inp-label {
+  display: block; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--text2); margin-bottom: 8px;
+}
+.inp-wrap {
+  position: relative;
+}
+.inp-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; pointer-events: none; opacity: 0.5;
+}
+.inp-wrap input, .inp-wrap select {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 10px; padding: 13px 14px 13px 42px;
+  color: var(--text); font-size: 14px;
+  font-family: var(--sans); outline: none;
+  transition: all 0.2s;
+}
+.inp-wrap input:focus, .inp-wrap select:focus {
+  border-color: var(--accent);
+  background: rgba(0,229,255,0.04);
+  box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+}
+.inp-wrap input::placeholder { color: var(--muted); }
+.inp-wrap select { appearance: none; padding-left: 42px; }
+.inp-wrap select option { background: var(--surface); }
+.inp-toggle {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  cursor: pointer; font-size: 15px; opacity: 0.5; transition: opacity 0.15s;
+}
+.inp-toggle:hover { opacity: 1; }
+.inp-error { font-size: 11px; color: var(--red); margin-top: 5px; display: none; }
+.inp-group.error .inp-wrap input { border-color: var(--red); }
+.inp-group.error .inp-error { display: block; }
+
+.inp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Password strength */
+.pw-strength { margin-top: 8px; }
+.pw-bars { display: flex; gap: 4px; margin-bottom: 4px; }
+.pw-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--border); transition: background 0.3s; }
+.pw-bar.weak { background: var(--red); }
+.pw-bar.medium { background: var(--accent3); }
+.pw-bar.strong { background: var(--green); }
+.pw-label { font-size: 11px; color: var(--muted); }
+
+/* Checkbox */
+.check-wrap {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; color: var(--text2); cursor: pointer;
+  margin-bottom: 22px;
+}
+.check-wrap input[type="checkbox"] { display: none; }
+.check-box {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0;
+  border: 1px solid var(--border2); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; margin-top: 1px;
+}
+.check-wrap input:checked + .check-box {
+  background: var(--accent); border-color: var(--accent);
+}
+.check-wrap input:checked + .check-box::after { content: '✓'; font-size: 11px; color: #060910; font-weight: 700; }
+.check-wrap a { color: var(--accent); text-decoration: none; }
+.check-wrap a:hover { text-decoration: underline; }
+
+/* Buttons */
+.btn-auth {
+  width: 100%; padding: 14px;
+  background: var(--accent); color: #060910;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 700;
+  font-family: var(--display);
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+  letter-spacing: 0.3px;
+}
+.btn-auth::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.btn-auth:hover { background: #33eaff; transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,229,255,0.35); }
+.btn-auth:hover::after { opacity: 1; }
+.btn-auth:active { transform: translateY(0); }
+.btn-auth.loading { pointer-events: none; opacity: 0.7; }
+
+.btn-social {
+  width: 100%; padding: 12px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; font-size: 13px; font-weight: 600;
+  color: var(--text); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: var(--sans); transition: all 0.15s;
+  margin-bottom: 10px;
+}
+.btn-social:hover { background: var(--surface2); border-color: var(--border2); transform: translateY(-1px); }
+
+.auth-switch {
+  text-align: center; font-size: 13px; color: var(--text2);
+  margin-top: 22px;
+}
+.auth-switch a { color: var(--accent); font-weight: 600; text-decoration: none; cursor: pointer; }
+.auth-switch a:hover { text-decoration: underline; }
+
+.forgot-link {
+  font-size: 12px; color: var(--text2); float: right; text-decoration: none; cursor: pointer;
+  transition: color 0.15s;
+}
+.forgot-link:hover { color: var(--accent); }
+
+/* Role badges on register */
+.role-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+.role-opt {
+  padding: 10px 6px; border-radius: 8px; text-align: center; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--surface);
+  transition: all 0.15s; font-size: 12px; font-weight: 600;
+  color: var(--text2);
+}
+.role-opt:hover { border-color: var(--accent2); color: var(--text); }
+.role-opt.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+.role-opt .role-ico { font-size: 20px; display: block; margin-bottom: 4px; }
+
+/* ── AUTH ALERTS ── */
+.auth-alert {
+  padding: 12px 16px; border-radius: 8px;
+  font-size: 13px; display: none; align-items: center; gap: 10px;
+  margin-bottom: 18px;
+}
+.auth-alert.show { display: flex; }
+.auth-alert.success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+.auth-alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+
+/* ═══════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pageIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.app-page.active { animation: pageIn 0.3s ease; }
+.auth-right { animation: fadeSlideIn 0.4s ease; }
+
+/* ═══════════════════════════════════════════════
+   MAIN APP (DASHBOARD)
+═══════════════════════════════════════════════ */
+.app-layout {
+  width: 100%; display: flex; min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 252px; flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0; bottom: 0;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 24px 20px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sb-brand { font-family: var(--mono); font-size: 17px; color: var(--accent); }
+.sb-brand span { color: var(--accent2); }
+.sb-tagline { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 2px; text-transform: uppercase; }
+.sb-section { padding: 16px 14px 5px; }
+.sb-section-lbl { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; padding: 0 8px; margin-bottom: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  transition: all 0.15s; font-size: 13.5px; color: var(--muted);
+  font-weight: 500; position: relative; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(0,229,255,0.07); color: var(--accent); border: 1px solid rgba(0,229,255,0.13); }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--accent2); color: white; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-family: var(--mono); }
+.sidebar-footer { margin-top: auto; padding: 14px; border-top: 1px solid var(--border); }
+.mongo-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); padding: 6px 10px; margin-bottom: 4px; }
+.mongo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.user-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--surface2); border-radius: 9px;
+  cursor: pointer; transition: all 0.15s; position: relative;
+}
+.user-card:hover { background: var(--border); }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; font-family: var(--mono); }
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role-lbl { font-size: 11px; color: var(--muted); }
+.user-menu-btn { margin-left: auto; font-size: 14px; color: var(--muted); }
+.logout-btn {
+  width: 100%; margin-top: 8px; padding: 9px; border-radius: 8px;
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15);
+  color: var(--red); font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: var(--sans); transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.logout-btn:hover { background: rgba(239,68,68,0.15); }
+
+/* ── MAIN ── */
+.main-area { margin-left: 252px; min-height: 100vh; flex: 1; }
+.topbar {
+  display: flex; align-items: center; gap: 14px; padding: 18px 28px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(6,9,16,0.85); backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-breadcrumb { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.topbar-breadcrumb span { color: var(--text); font-weight: 700; }
+.search-wrap { margin-left: auto; display: flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--border2); border-radius: 9px; padding: 8px 14px; width: 250px; }
+.search-wrap input { background: transparent; border: none; outline: none; color: var(--text); font-size: 13px; width: 100%; font-family: var(--sans); }
+.search-wrap input::placeholder { color: var(--muted); }
+
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 17px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; outline: none; transition: all 0.15s; font-family: var(--sans); }
+.btn-primary { background: var(--accent); color: #060910; }
+.btn-primary:hover { background: #33eaff; transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0,229,255,0.3); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+.content { padding: 26px 28px; }
+.page { display: none; }
+.page.active { display: block; animation: fadeSlideUp 0.25s ease; }
+
+/* ── STATS GRID ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 26px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; position: relative; overflow: hidden; transition: all 0.2s; }
+.stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+.stat-card.c1::after { background: var(--accent); }
+.stat-card.c2::after { background: var(--accent2); }
+.stat-card.c3::after { background: var(--accent3); }
+.stat-card.c4::after { background: var(--green); }
+.stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.stat-value { font-family: var(--mono); font-size: 28px; color: var(--text); font-weight: 700; }
+.stat-delta { font-size: 11px; margin-top: 4px; color: var(--green); }
+.stat-icon { position: absolute; right: 18px; top: 18px; font-size: 24px; opacity: 0.1; }
+
+/* ── TABLES ── */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.table-header { display: flex; align-items: center; padding: 17px 22px; border-bottom: 1px solid var(--border); gap: 10px; flex-wrap: wrap; }
+.table-header h3 { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.table-count { font-size: 11px; color: var(--muted); background: var(--surface2); padding: 3px 9px; border-radius: 20px; font-family: var(--mono); }
+.filter-bar { display: flex; gap: 6px; padding: 10px 22px; border-bottom: 1px solid var(--border); background: var(--surface2); overflow-x: auto; flex-wrap: wrap; }
+.filter-chip { padding: 5px 13px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border2); color: var(--muted); white-space: nowrap; transition: all 0.15s; }
+.filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+.filter-chip.active { background: var(--accent); color: #060910; border-color: var(--accent); font-weight: 600; }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 11px 18px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); font-family: var(--mono); font-weight: 400; border-bottom: 1px solid var(--border); }
+tbody tr { border-bottom: 1px solid rgba(30,45,66,0.4); transition: background 0.12s; cursor: pointer; }
+tbody tr:hover { background: var(--surface2); }
+tbody tr:last-child { border-bottom: none; }
+td { padding: 13px 18px; font-size: 13px; }
+
+.emp-cell { display: flex; align-items: center; gap: 11px; }
+.emp-av { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; font-family: var(--mono); }
+.emp-name { font-weight: 600; font-size: 13.5px; }
+.emp-id { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+.tag { display: inline-block; padding: 3px 9px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--mono); }
+.tag-dev { background: rgba(124,58,237,0.12); color: #a78bfa; border: 1px solid rgba(124,58,237,0.25); }
+.tag-qa { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+.tag-devops { background: rgba(0,229,255,0.08); color: var(--accent); border: 1px solid rgba(0,229,255,0.18); }
+.tag-mgr { background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+.tag-design { background: rgba(236,72,153,0.1); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.2); }
+.tag-data { background: rgba(249,115,22,0.12); color: #fdba74; border: 1px solid rgba(249,115,22,0.25); }
+
+.status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.status-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; }
+.status-dot.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-dot.bench::before { background: var(--accent3); }
+.status-dot.leave::before { background: var(--muted); }
+
+.actions { display: flex; gap: 5px; }
+.icon-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--muted); transition: all 0.15s; }
+.icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+/* ── SKILL TAGS ── */
+.skill-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.skill-tag { padding: 3px 10px; background: rgba(124,58,237,0.12); color: #a78bfa; border: 1px solid rgba(124,58,237,0.22); border-radius: 4px; font-size: 10px; font-family: var(--mono); display: flex; align-items: center; gap: 5px; }
+.skill-tag .remove { cursor: pointer; color: #7c3aed; font-size: 13px; line-height: 1; }
+
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; animation: fadeSlideUp 0.2s ease; }
+.modal-header { padding: 22px 26px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.modal-title { font-family: var(--mono); font-size: 14px; font-weight: 700; }
+.modal-close { margin-left: auto; cursor: pointer; font-size: 17px; color: var(--muted); width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.15s; }
+.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-body { padding: 26px; }
+.modal-footer { padding: 18px 26px; border-top: 1px solid var(--border); display: flex; gap: 9px; justify-content: flex-end; }
+
+/* ── FORM ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1/-1; }
+.form-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.form-input, .form-select, .form-textarea { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 13px; color: var(--text); font-size: 13px; font-family: var(--sans); outline: none; transition: border-color 0.15s; width: 100%; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,255,0.07); }
+.form-input::placeholder { color: var(--muted); }
+.form-select option { background: var(--surface); }
+.form-textarea { resize: vertical; min-height: 75px; }
+.skill-input-row { display: flex; gap: 8px; margin-bottom: 7px; }
+.skill-input-row .form-input { flex: 1; }
+
+/* ── PROJECTS ── */
+.projects-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 17px; }
+.project-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: all 0.2s; cursor: pointer; }
+.project-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+.project-name { font-weight: 700; font-size: 14.5px; margin-bottom: 5px; }
+.project-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+.progress-bar { height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden; margin: 12px 0 6px; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+/* ── PERF ── */
+.perf-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.perf-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.perf-card h3 { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1.5px; }
+.perf-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(30,45,66,0.4); }
+.perf-row:last-child { border-bottom: none; }
+.perf-emp { flex: 1; display: flex; align-items: center; gap: 10px; }
+.perf-score { font-family: var(--mono); font-size: 15px; font-weight: 700; width: 44px; text-align: right; }
+.perf-bar-wrap { flex: 2; height: 5px; background: var(--border2); border-radius: 3px; overflow: hidden; }
+.perf-bar { height: 100%; border-radius: 3px; }
+
+/* ── LEAVE ── */
+.leave-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.leave-list { display: flex; flex-direction: column; gap: 9px; }
+.leave-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; background: var(--surface2); border-radius: 8px; border-left: 3px solid; transition: all 0.15s; }
+.leave-item:hover { transform: translateX(3px); }
+.leave-type-pending { border-color: var(--accent3); }
+.leave-type-approved { border-color: var(--green); }
+.leave-type-rejected { border-color: var(--red); }
+.leave-emp { flex: 1; }
+.leave-emp-name { font-weight: 600; font-size: 13.5px; }
+.leave-dates { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+.leave-badge { padding: 3px 9px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: var(--mono); text-transform: uppercase; }
+.lb-pending { background: rgba(245,158,11,0.12); color: var(--accent3); }
+.lb-approved { background: rgba(16,185,129,0.1); color: var(--green); }
+.lb-rejected { background: rgba(239,68,68,0.1); color: var(--red); }
+
+/* ── DEPT CHART ── */
+.dept-bars { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.dept-row { display: flex; align-items: center; gap: 10px; }
+.dept-name { width: 88px; font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; }
+.dept-track { flex: 1; height: 24px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.dept-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-family: var(--mono); font-weight: 700; color: rgba(255,255,255,0.85); transition: width 0.8s ease; }
+.dept-count { width: 24px; font-family: var(--mono); font-size: 12px; font-weight: 700; }
+
+/* ── MONGO BAR ── */
+.mongo-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; display: flex; align-items: center; gap: 16px; margin-bottom: 20px; font-size: 12px; flex-wrap: wrap; }
+.mongo-bar-title { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+.mongo-kv { display: flex; gap: 5px; }
+.mongo-key { color: var(--muted); }
+.mongo-val { color: var(--text); font-family: var(--mono); }
+.mongo-sep { color: var(--border2); }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 7px; }
+.toast { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 16px; font-size: 13px; display: flex; align-items: center; gap: 9px; min-width: 270px; animation: fadeSlideIn 0.3s ease; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--accent); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+
+/* ── REPORTS ── */
+.report-code {
+  background: var(--bg); border-radius: 8px; padding: 14px;
+  font-family: var(--mono); font-size: 11px; color: var(--accent);
+  line-height: 1.8; margin-bottom: 14px;
+}
+
+/* ── DETAIL ── */
+.detail-header { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 22px; }
+.detail-av { width: 68px; height: 68px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: white; font-family: var(--mono); flex-shrink: 0; }
+.detail-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.detail-meta { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.detail-field { background: var(--surface2); border-radius: 7px; padding: 12px 14px; }
+.detail-field-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.detail-field-val { font-size: 13px; font-weight: 500; }
+
+/* ── RESPONSIVE ── */
+@media (max-width:1200px) {
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .projects-grid { grid-template-columns: repeat(2,1fr); }
+  .perf-grid, .leave-grid { grid-template-columns: 1fr; }
+  .auth-left { display: none; }
+  .auth-right { width: 100%; padding: 40px 32px; }
+}
+@media (max-width:768px) {
+  .sidebar { width: 200px; }
+  .main-area { margin-left: 200px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════
+     PAGE 1: LOGIN
+════════════════════════════════ -->
+<div class="app-page active" id="page-login">
+  <div class="auth-page">
+
+    <!-- LEFT -->
+    <div class="auth-left">
+      <div class="auth-left-content">
+        <div class="auth-logo">
+          Nexus<span class="logo-dot">HR</span>
+          <span class="auth-logo-badge">v2.0</span>
+        </div>
+        <div class="auth-headline">
+          Manage your<br>
+          <em>engineering</em><br>
+          <span class="line2">teams smarter.</span>
+        </div>
+        <p class="auth-sub">
+          A unified platform for tracking software engineers, projects, performance and leave — powered by MongoDB.
+        </p>
+        <div class="auth-features">
+          <div class="auth-feature">
+            <div class="feat-icon">👥</div>
+            <div class="feat-text">
+              <div class="feat-title">Employee Lifecycle</div>
+              <div class="feat-desc">Onboard, track skills, manage status</div>
+            </div>
+          </div>
+          <div class="auth-feature">
+            <div class="feat-icon">🚀</div>
+            <div class="feat-text">
+              <div class="feat-title">Project Allocation</div>
+              <div class="feat-desc">Assign engineers, track progress</div>
+            </div>
+          </div>
+          <div class="auth-feature">
+            <div class="feat-icon">📊</div>
+            <div class="feat-text">
+              <div class="feat-title">Performance Analytics</div>
+              <div class="feat-desc">Rankings, scores, team insights</div>
+            </div>
+          </div>
+          <div class="auth-feature">
+            <div class="feat-icon">🍃</div>
+            <div class="feat-text">
+              <div class="feat-title">MongoDB Native</div>
+              <div class="feat-desc">Aggregation pipelines, real-time sync</div>
+            </div>
+          </div>
+        </div>
+        <div class="auth-stats">
+          <div><div class="auth-stat-val">500+</div><div class="auth-stat-lbl">Engineers</div></div>
+          <div><div class="auth-stat-val">48</div><div class="auth-stat-lbl">Projects</div></div>
+          <div><div class="auth-stat-val">99.9%</div><div class="auth-stat-lbl">Uptime</div></div>
+        </div>
+      </div>
+
+      <div class="code-snippet">
+        <div class="cs-comment">// MongoDB live query</div>
+        <div><span class="cs-key">db</span>.<span class="cs-fn">employees</span>.find({</div>
+        <div>&nbsp;&nbsp;<span class="cs-key">status</span>: <span class="cs-str">"active"</span>,</div>
+        <div>&nbsp;&nbsp;<span class="cs-key">skills</span>: <span class="cs-str">"React"</span></div>
+        <div>})</div>
+        <div style="margin-top:8px;color:var(--green)"><span class="cs-dot green"></span>3 documents found</div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="auth-right">
+      <div class="form-header">
+        <h2>Welcome back 👋</h2>
+        <p>Sign in to your NexusHR workspace</p>
+      </div>
+
+      <div id="login-alert" class="auth-alert"></div>
+
+      <button class="btn-social">
+        <span>🔵</span> Continue with Google
+      </button>
+      <button class="btn-social">
+        <span>🐙</span> Continue with GitHub
+      </button>
+
+      <div class="form-divider"><span>or sign in with email</span></div>
+
+      <div class="inp-group" id="lg-email-grp">
+        <label class="inp-label">Email Address</label>
+        <div class="inp-wrap">
+          <span class="inp-icon">✉</span>
+          <input type="email" id="lg-email" placeholder="you@company.com" />
+        </div>
+        <div class="inp-error" id="lg-email-err">Please enter a valid email</div>
+      </div>
+
+      <div class="inp-group" id="lg-pw-grp">
+        <label class="inp-label">
+          Password
+          <a class="forgot-link" onclick="showForgot()">Forgot password?</a>
+        </label>
+        <div class="inp-wrap">
+          <span class="inp-icon">🔒</span>
+          <input type="password" id="lg-pw" placeholder="••••••••" />
+          <span class="inp-toggle" onclick="togglePw('lg-pw',this)">👁</span>
+        </div>
+        <div class="inp-error" id="lg-pw-err">Password is required</div>
+      </div>
+
+      <label class="check-wrap" style="margin-bottom:22px">
+        <input type="checkbox" id="lg-remember" />
+        <span class="check-box"></span>
+        Keep me signed in for 30 days
+      </label>
+
+      <button class="btn-auth" id="login-btn" onclick="handleLogin()">
+        Sign In to NexusHR
+      </button>
+
+      <div class="auth-switch">
+        Don't have an account? <a onclick="goTo('page-register')">Create one free →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE 2: REGISTER
+════════════════════════════════ -->
+<div class="app-page" id="page-register">
+  <div class="auth-page">
+
+    <!-- LEFT -->
+    <div class="auth-left">
+      <div class="auth-left-content">
+        <div class="auth-logo">Nexus<span class="logo-dot">HR</span><span class="auth-logo-badge">v2.0</span></div>
+        <div class="auth-headline">
+          Start building<br>
+          <em>your team's</em><br>
+          <span class="line2">command center.</span>
+        </div>
+        <p class="auth-sub">Get started in minutes. Connect your MongoDB instance, import your team, and manage everything from one beautiful interface.</p>
+        <div class="auth-features">
+          <div class="auth-feature">
+            <div class="feat-icon">⚡</div>
+            <div class="feat-text"><div class="feat-title">5-Minute Setup</div><div class="feat-desc">No credit card. No complex config.</div></div>
+          </div>
+          <div class="auth-feature">
+            <div class="feat-icon">🔐</div>
+            <div class="feat-text"><div class="feat-title">Secure by Default</div><div class="feat-desc">Bcrypt hashing, JWT sessions, RBAC</div></div>
+          </div>
+          <div class="auth-feature">
+            <div class="feat-icon">📥</div>
+            <div class="feat-text"><div class="feat-title">Bulk Import</div><div class="feat-desc">CSV/Excel import for existing teams</div></div>
+          </div>
+          <div class="auth-feature">
+            <div class="feat-icon">🌐</div>
+            <div class="feat-text"><div class="feat-title">Atlas Ready</div><div class="feat-desc">Connect to MongoDB Atlas instantly</div></div>
+          </div>
+        </div>
+        <div class="auth-stats">
+          <div><div class="auth-stat-val">Free</div><div class="auth-stat-lbl">To Start</div></div>
+          <div><div class="auth-stat-val">&lt;5ms</div><div class="auth-stat-lbl">Query Time</div></div>
+          <div><div class="auth-stat-val">MIT</div><div class="auth-stat-lbl">License</div></div>
+        </div>
+      </div>
+      <div class="code-snippet" style="bottom:60px">
+        <div class="cs-comment">// New account created</div>
+        <div><span class="cs-fn">db.users</span>.insertOne({</div>
+        <div>&nbsp;&nbsp;<span class="cs-key">role</span>: <span class="cs-str">"admin"</span>,</div>
+        <div>&nbsp;&nbsp;<span class="cs-key">org</span>: <span class="cs-str">"YourCo"</span></div>
+        <div>})</div>
+        <div style="margin-top:8px;color:var(--accent)"><span class="cs-dot" style="background:var(--accent);box-shadow:0 0 6px var(--accent)"></span>acknowledged: true</div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="auth-right" style="overflow-y:auto;padding:40px 52px">
+      <div class="form-header">
+        <h2>Create your account</h2>
+        <p>Set up NexusHR for your engineering org</p>
+      </div>
+
+      <div id="reg-alert" class="auth-alert"></div>
+
+      <!-- Role picker -->
+      <div style="margin-bottom:20px">
+        <div class="inp-label" style="display:block;margin-bottom:10px">Your Role</div>
+        <div class="role-picker" id="role-picker">
+          <div class="role-opt selected" onclick="pickRole(this,'Admin')" data-role="Admin"><span class="role-ico">🛡</span>Admin</div>
+          <div class="role-opt" onclick="pickRole(this,'Manager')" data-role="Manager"><span class="role-ico">👔</span>Manager</div>
+          <div class="role-opt" onclick="pickRole(this,'HR')" data-role="HR"><span class="role-ico">📋</span>HR Lead</div>
+          <div class="role-opt" onclick="pickRole(this,'Developer')" data-role="Developer"><span class="role-ico">💻</span>Dev</div>
+          <div class="role-opt" onclick="pickRole(this,'DevOps')" data-role="DevOps"><span class="role-ico">⚙️</span>DevOps</div>
+          <div class="role-opt" onclick="pickRole(this,'Viewer')" data-role="Viewer"><span class="role-ico">👁</span>Viewer</div>
+        </div>
+      </div>
+
+      <div class="inp-row" style="margin-bottom:18px">
+        <div class="inp-group" id="rg-fn-grp">
+          <label class="inp-label">First Name *</label>
+          <div class="inp-wrap">
+            <span class="inp-icon">👤</span>
+            <input type="text" id="rg-fn" placeholder="Aditya" />
+          </div>
+          <div class="inp-error" id="rg-fn-err">Required</div>
+        </div>
+        <div class="inp-group" id="rg-ln-grp">
+          <label class="inp-label">Last Name *</label>
+          <div class="inp-wrap">
+            <span class="inp-icon">👤</span>
+            <input type="text" id="rg-ln" placeholder="Sharma" />
+          </div>
+          <div class="inp-error" id="rg-ln-err">Required</div>
+        </div>
+      </div>
+
+      <div class="inp-group" id="rg-email-grp" style="margin-bottom:18px">
+        <label class="inp-label">Work Email *</label>
+        <div class="inp-wrap">
+          <span class="inp-icon">✉</span>
+          <input type="email" id="rg-email" placeholder="aditya@yourcompany.com" />
+        </div>
+        <div class="inp-error" id="rg-email-err">Enter a valid email</div>
+      </div>
+
+      <div class="inp-group" style="margin-bottom:18px">
+        <label class="inp-label">Organisation Name</label>
+        <div class="inp-wrap">
+          <span class="inp-icon">🏢</span>
+          <input type="text" id="rg-org" placeholder="Nexus Technologies Pvt Ltd" />
+        </div>
+      </div>
+
+      <div class="inp-group" id="rg-pw-grp" style="margin-bottom:6px">
+        <label class="inp-label">Password *</label>
+        <div class="inp-wrap">
+          <span class="inp-icon">🔒</span>
+          <input type="password" id="rg-pw" placeholder="Min. 8 characters" oninput="checkPwStrength(this.value)" />
+          <span class="inp-toggle" onclick="togglePw('rg-pw',this)">👁</span>
+        </div>
+        <div class="inp-error" id="rg-pw-err">Min 8 characters required</div>
+      </div>
+      <div class="pw-strength" style="margin-bottom:18px">
+        <div class="pw-bars"><div class="pw-bar" id="pwb1"></div><div class="pw-bar" id="pwb2"></div><div class="pw-bar" id="pwb3"></div><div class="pw-bar" id="pwb4"></div></div>
+        <div class="pw-label" id="pw-label">Enter a password</div>
+      </div>
+
+      <div class="inp-group" id="rg-cpw-grp" style="margin-bottom:18px">
+        <label class="inp-label">Confirm Password *</label>
+        <div class="inp-wrap">
+          <span class="inp-icon">🔒</span>
+          <input type="password" id="rg-cpw" placeholder="Repeat password" />
+          <span class="inp-toggle" onclick="togglePw('rg-cpw',this)">👁</span>
+        </div>
+        <div class="inp-error" id="rg-cpw-err">Passwords do not match</div>
+      </div>
+
+      <label class="check-wrap" id="terms-wrap">
+        <input type="checkbox" id="rg-terms" />
+        <span class="check-box"></span>
+        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+      </label>
+
+      <button class="btn-auth" id="register-btn" onclick="handleRegister()">
+        Create Account & Get Started
+      </button>
+
+      <div class="auth-switch">Already have an account? <a onclick="goTo('page-login')">← Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE 3: MAIN APP
+════════════════════════════════ -->
+<div class="app-page" id="page-app">
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sb-brand">Nexus<span>HR</span></div>
+        <div class="sb-tagline">Personnel Management</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-lbl">Main</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">⬡</span> Dashboard</div>
+        <div class="nav-item" onclick="showPage('employees',this)"><span class="nav-icon">◈</span> Employees <span class="nav-badge" id="emp-count-badge">0</span></div>
+        <div class="nav-item" onclick="showPage('projects',this)"><span class="nav-icon">◇</span> Projects</div>
+        <div class="nav-item" onclick="showPage('performance',this)"><span class="nav-icon">△</span> Performance</div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-lbl">HR</div>
+        <div class="nav-item" onclick="showPage('leave',this)"><span class="nav-icon">◻</span> Leave Mgmt <span class="nav-badge" id="leave-count-badge">0</span></div>
+        <div class="nav-item" onclick="showPage('reports',this)"><span class="nav-icon">◎</span> Reports</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="mongo-status"><div class="mongo-dot"></div> MongoDB Connected</div>
+        <div class="user-card">
+          <div class="user-avatar" id="sb-avatar" style="background:#7c3aed">AD</div>
+          <div>
+            <div class="user-name" id="sb-name">Admin</div>
+            <div class="user-role-lbl" id="sb-role">Super Admin</div>
+          </div>
+          <span class="user-menu-btn">⋯</span>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">↩ Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="main-area">
+      <div class="topbar">
+        <div class="topbar-breadcrumb">NexusHR / <span id="page-label">Dashboard</span></div>
+        <div class="search-wrap"><span>🔍</span><input type="text" placeholder="Search employees, projects..." id="search-input" oninput="handleSearch()" /></div>
+        <button class="btn btn-ghost" onclick="document.getElementById('query-modal').classList.add('open')">⚡ Query DB</button>
+        <button class="btn btn-primary" id="add-btn" onclick="openAddEmployee()">+ Add Employee</button>
+      </div>
+
+      <div class="content">
+
+        <!-- DASHBOARD -->
+        <div class="page active" id="page-dashboard">
+          <div class="mongo-bar">
+            <span class="mongo-bar-title">🍃 MongoDB</span><span class="mongo-sep">|</span>
+            <span class="mongo-kv"><span class="mongo-key">db:</span><span class="mongo-val">nexushr</span></span><span class="mongo-sep">|</span>
+            <span class="mongo-kv"><span class="mongo-key">docs:</span><span class="mongo-val" id="db-doc-count">—</span></span><span class="mongo-sep">|</span>
+            <span class="mongo-kv"><span class="mongo-key">status:</span><span class="mongo-val" style="color:var(--green)">● CONNECTED</span></span>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card c1"><div class="stat-icon">👥</div><div class="stat-label">Total Employees</div><div class="stat-value" id="stat-total">0</div><div class="stat-delta">Active workforce</div></div>
+            <div class="stat-card c2"><div class="stat-icon">🚀</div><div class="stat-label">Active Projects</div><div class="stat-value" id="stat-projects">0</div><div class="stat-delta">In progress</div></div>
+            <div class="stat-card c3"><div class="stat-icon">⏳</div><div class="stat-label">On Leave</div><div class="stat-value" id="stat-leave">0</div><div class="stat-delta">Approved leaves</div></div>
+            <div class="stat-card c4"><div class="stat-icon">⭐</div><div class="stat-label">Avg Performance</div><div class="stat-value" id="stat-perf">—</div><div class="stat-delta">This quarter</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+            <div class="table-wrap">
+              <div class="table-header"><h3>RECENT HIRES</h3><span class="table-count" id="recent-count">—</span></div>
+              <table><thead><tr><th>Employee</th><th>Role</th><th>Dept</th><th>Joined</th><th>Status</th></tr></thead><tbody id="recent-table"></tbody></table>
+            </div>
+            <div class="table-wrap">
+              <div class="table-header"><h3>DEPT BREAKDOWN</h3></div>
+              <div style="padding:16px"><div class="dept-bars" id="dept-chart"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EMPLOYEES -->
+        <div class="page" id="page-employees">
+          <div class="table-wrap">
+            <div class="table-header">
+              <h3>ALL EMPLOYEES</h3><span class="table-count" id="emp-table-count">—</span>
+              <div style="margin-left:auto;display:flex;gap:8px">
+                <button class="btn btn-ghost" onclick="exportCSV()">↓ Export</button>
+                <button class="btn btn-primary" onclick="openAddEmployee()">+ Add Employee</button>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <span class="filter-chip active" onclick="filterEmp('all',this)">All</span>
+              <span class="filter-chip" onclick="filterEmp('Developer',this)">Developer</span>
+              <span class="filter-chip" onclick="filterEmp('QA',this)">QA</span>
+              <span class="filter-chip" onclick="filterEmp('DevOps',this)">DevOps</span>
+              <span class="filter-chip" onclick="filterEmp('Manager',this)">Manager</span>
+              <span class="filter-chip" onclick="filterEmp('Designer',this)">Designer</span>
+              <span class="filter-chip" onclick="filterEmp('Data',this)">Data</span>
+              <span class="filter-chip" onclick="filterEmp('active',this)">🟢 Active</span>
+              <span class="filter-chip" onclick="filterEmp('bench',this)">🟡 Bench</span>
+            </div>
+            <table><thead><tr><th>Employee</th><th>Role</th><th>Department</th><th>Skills</th><th>Exp</th><th>Status</th><th>Actions</th></tr></thead><tbody id="emp-table"></tbody></table>
+          </div>
+        </div>
+
+        <!-- PROJECTS -->
+        <div class="page" id="page-projects">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h2 style="font-family:var(--display);font-size:18px;font-weight:800">Projects</h2>
+            <button class="btn btn-primary" onclick="openAddProject()">+ New Project</button>
+          </div>
+          <div class="projects-grid" id="projects-grid"></div>
+        </div>
+
+        <!-- PERFORMANCE -->
+        <div class="page" id="page-performance">
+          <div class="perf-grid">
+            <div class="table-wrap">
+              <div class="table-header"><h3>PERFORMANCE RANKINGS</h3></div>
+              <div style="padding:2px 0" id="perf-list"></div>
+            </div>
+            <div>
+              <div class="perf-card" style="margin-bottom:18px"><h3>Score Distribution</h3><div id="score-dist"></div></div>
+              <div class="perf-card"><h3>Highlights</h3><div id="perf-highlights"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEAVE -->
+        <div class="page" id="page-leave">
+          <div class="leave-grid">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+                <h2 style="font-family:var(--mono);font-size:14px">LEAVE REQUESTS</h2>
+                <button class="btn btn-primary" onclick="openAddLeave()">+ Request Leave</button>
+              </div>
+              <div class="leave-list" id="leave-list"></div>
+            </div>
+            <div><div class="perf-card"><h3>Leave Summary</h3><div id="leave-summary"></div></div></div>
+          </div>
+        </div>
+
+        <!-- REPORTS -->
+        <div class="page" id="page-reports">
+          <div class="mongo-bar" style="background:rgba(0,229,255,0.04);border-color:rgba(0,229,255,0.18)">
+            <span class="mongo-bar-title">⚡ Aggregation Pipeline</span><span class="mongo-sep">|</span>
+            <span class="mongo-kv"><span class="mongo-key">stages:</span><span class="mongo-val">$group → $sort → $project</span></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" id="reports-content"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE MODAL -->
+<div class="modal-overlay" id="employee-modal">
+  <div class="modal">
+    <div class="modal-header"><span>👤</span><div class="modal-title" id="modal-title">Add Employee</div><div class="modal-close" onclick="closeModal('employee-modal')">✕</div></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">First Name *</label><input class="form-input" type="text" id="f-fname" placeholder="Aditya"/></div>
+        <div class="form-group"><label class="form-label">Last Name *</label><input class="form-input" type="text" id="f-lname" placeholder="Sharma"/></div>
+        <div class="form-group"><label class="form-label">Employee ID</label><input class="form-input" type="text" id="f-empid" readonly style="opacity:.6"/></div>
+        <div class="form-group"><label class="form-label">Email *</label><input class="form-input" type="email" id="f-email" placeholder="aditya@company.com"/></div>
+        <div class="form-group"><label class="form-label">Role *</label>
+          <select class="form-select" id="f-role">
+            <option value="">Select role...</option>
+            <option>Frontend Developer</option><option>Backend Developer</option><option>Full Stack Developer</option>
+            <option>QA Engineer</option><option>DevOps Engineer</option><option>Engineering Manager</option>
+            <option>Product Manager</option><option>UI/UX Designer</option><option>Data Engineer</option>
+            <option>Data Scientist</option><option>ML Engineer</option><option>Scrum Master</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Department *</label>
+          <select class="form-select" id="f-dept">
+            <option value="">Select dept...</option>
+            <option>Engineering</option><option>QA</option><option>DevOps</option>
+            <option>Management</option><option>Design</option><option>Data Science</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Experience (yrs)</label><input class="form-input" type="number" id="f-exp" placeholder="3" min="0" max="40"/></div>
+        <div class="form-group"><label class="form-label">Salary (USD)</label><input class="form-input" type="number" id="f-salary" placeholder="85000"/></div>
+        <div class="form-group"><label class="form-label">Join Date</label><input class="form-input" type="date" id="f-joindate"/></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="f-status"><option value="active">Active</option><option value="bench">On Bench</option><option value="leave">On Leave</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Location</label><input class="form-input" type="text" id="f-location" placeholder="Chennai, IN"/></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" type="tel" id="f-phone" placeholder="+91 98765 43210"/></div>
+        <div class="form-group full">
+          <label class="form-label">Technical Skills</label>
+          <div class="skill-input-row"><input class="form-input" type="text" id="skill-input" placeholder="React, Node.js, Python..."/><button class="btn btn-primary" onclick="addSkill()">Add</button></div>
+          <div class="skill-tags" id="skills-container"></div>
+        </div>
+        <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-textarea" id="f-notes" placeholder="Additional notes..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('employee-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">💾 Save to MongoDB</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal" style="max-width:650px">
+    <div class="modal-header"><span>📋</span><div class="modal-title">Employee Profile</div><div class="modal-close" onclick="closeModal('detail-modal')">✕</div></div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="detail-delete-btn">🗑 Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal('detail-modal')">Close</button>
+      <button class="btn btn-primary" id="detail-edit-btn">✏️ Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-overlay" id="project-modal">
+  <div class="modal">
+    <div class="modal-header"><span>🚀</span><div class="modal-title">New Project</div><div class="modal-close" onclick="closeModal('project-modal')">✕</div></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Name *</label><input class="form-input" type="text" id="p-name" placeholder="Project Alpha"/></div>
+        <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="p-desc" placeholder="What does this project do?"></textarea></div>
+        <div class="form-group"><label class="form-label">Tech Stack</label><input class="form-input" type="text" id="p-stack" placeholder="React, Node, MongoDB"/></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="p-status"><option>Active</option><option>Planning</option><option>On Hold</option><option>Completed</option></select></div>
+        <div class="form-group"><label class="form-label">Progress (%)</label><input class="form-input" type="number" id="p-progress" placeholder="45" min="0" max="100"/></div>
+        <div class="form-group"><label class="form-label">Team Size</label><input class="form-input" type="number" id="p-team" placeholder="6" min="1"/></div>
+        <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" id="p-start"/></div>
+        <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" id="p-end"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('project-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()">💾 Save Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEAVE MODAL -->
+<div class="modal-overlay" id="leave-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><span>📅</span><div class="modal-title">Leave Request</div><div class="modal-close" onclick="closeModal('leave-modal')">✕</div></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Employee *</label><select class="form-select" id="l-emp"></select></div>
+        <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="l-type"><option>Annual Leave</option><option>Sick Leave</option><option>Maternity/Paternity</option><option>Unpaid Leave</option><option>Comp Off</option></select></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="l-status"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div class="form-group"><label class="form-label">From Date</label><input class="form-input" type="date" id="l-from"/></div>
+        <div class="form-group"><label class="form-label">To Date</label><input class="form-input" type="date" id="l-to"/></div>
+        <div class="form-group full"><label class="form-label">Reason</label><textarea class="form-textarea" id="l-reason" placeholder="Reason..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('leave-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLeave()">💾 Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUERY MODAL -->
+<div class="modal-overlay" id="query-modal">
+  <div class="modal" style="max-width:530px">
+    <div class="modal-header"><span>⚡</span><div class="modal-title" style="font-family:var(--mono)">MongoDB Query Console</div><div class="modal-close" onclick="closeModal('query-modal')">✕</div></div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:13px"><label class="form-label">Collection</label><select class="form-select" id="q-coll" style="font-family:var(--mono);font-size:12px"><option>employees</option><option>projects</option><option>leaves</option></select></div>
+      <div class="form-group" style="margin-bottom:13px"><label class="form-label">Query (JSON)</label><textarea class="form-textarea" id="q-query" style="font-family:var(--mono);font-size:12px;min-height:85px" placeholder='{ "department": "Engineering" }'></textarea></div>
+      <div style="background:var(--bg);border-radius:8px;padding:13px;min-height:100px;font-family:var(--mono);font-size:11px;color:var(--accent);line-height:1.7;overflow:auto;max-height:230px;white-space:pre-wrap" id="q-result">// Execute a query to see results</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('query-modal')">Close</button>
+      <button class="btn btn-primary" onclick="runQuery()">▶ Execute</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<!-- ════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════
+//  IN-BROWSER MONGODB SIMULATION
+//  Replace with Express/Mongoose in production
+// ══════════════════════════════════════════
+const DB = {
+  _s: {},
+  col(n) {
+    if (!this._s[n]) this._s[n] = [];
+    const self = this;
+    return {
+      find(q={}) {
+        let docs = [...(self._s[n]||[])];
+        return Object.keys(q).length
+          ? docs.filter(d=>Object.keys(q).every(k=>typeof q[k]==='string'
+              ? (d[k]||'').toLowerCase().includes(q[k].toLowerCase())
+              : d[k]===q[k]))
+          : docs;
+      },
+      insertOne(doc) {
+        doc._id='oid_'+Date.now()+Math.random().toString(36).slice(2,6);
+        doc.createdAt=doc.updatedAt=new Date().toISOString();
+        self._s[n].push(doc); self._save(); return doc;
+      },
+      updateOne(f,u) {
+        const i=self._s[n].findIndex(d=>d._id===f._id);
+        if(i>-1){Object.assign(self._s[n][i],u.$set||u);self._s[n][i].updatedAt=new Date().toISOString();self._save();return self._s[n][i];}
+      },
+      deleteOne(f) {
+        const i=self._s[n].findIndex(d=>d._id===f._id);
+        if(i>-1){self._s[n].splice(i,1);self._save();return true;}return false;
+      },
+      count(){return(self._s[n]||[]).length;}
+    };
+  },
+  _save(){try{localStorage.setItem('nexushr_db3',JSON.stringify(this._s));}catch(e){}},
+  _load(){try{const d=localStorage.getItem('nexushr_db3');if(d)this._s=JSON.parse(d);}catch(e){}}
+};
+DB._load();
+
+// ── USERS STORE ──
+const USERS_KEY = 'nexushr_users';
+function getUsers() { try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]');}catch(e){return[];} }
+function saveUsers(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+function getCurrentUser() { try{return JSON.parse(sessionStorage.getItem('nexushr_user')||'null');}catch(e){return null;} }
+function setCurrentUser(u) { sessionStorage.setItem('nexushr_user', JSON.stringify(u)); }
+
+// ── SEED DATA ──
+const SEED_EMPS=[
+  {name:'Aditya Sharma',email:'aditya@nexus.io',role:'Full Stack Developer',department:'Engineering',experience:5,salary:95000,skills:['React','Node.js','MongoDB','Docker'],status:'active',location:'Bangalore, IN',phone:'+91 98765 43210',joinDate:'2022-03-15',performance:92,empId:'EMP001'},
+  {name:'Priya Mehta',email:'priya@nexus.io',role:'QA Engineer',department:'QA',experience:3,salary:72000,skills:['Selenium','Cypress','Jest','Postman'],status:'active',location:'Mumbai, IN',phone:'+91 87654 32109',joinDate:'2023-01-10',performance:87,empId:'EMP002'},
+  {name:'Rahul Nair',email:'rahul@nexus.io',role:'DevOps Engineer',department:'DevOps',experience:6,salary:105000,skills:['Kubernetes','AWS','Terraform','CI/CD'],status:'active',location:'Chennai, IN',phone:'+91 76543 21098',joinDate:'2021-07-01',performance:95,empId:'EMP003'},
+  {name:'Sneha Iyer',email:'sneha@nexus.io',role:'UI/UX Designer',department:'Design',experience:4,salary:82000,skills:['Figma','Adobe XD','Sketch'],status:'bench',location:'Pune, IN',phone:'+91 65432 10987',joinDate:'2022-11-20',performance:89,empId:'EMP004'},
+  {name:'Vikram Gupta',email:'vikram@nexus.io',role:'Engineering Manager',department:'Management',experience:10,salary:145000,skills:['Leadership','Agile','Scrum','System Design'],status:'active',location:'Delhi, IN',phone:'+91 54321 09876',joinDate:'2020-05-15',performance:94,empId:'EMP005'},
+  {name:'Ananya Das',email:'ananya@nexus.io',role:'Data Scientist',department:'Data Science',experience:4,salary:98000,skills:['Python','TensorFlow','Spark','SQL'],status:'active',location:'Hyderabad, IN',phone:'+91 43210 98765',joinDate:'2022-08-01',performance:91,empId:'EMP006'},
+  {name:'Karthik Reddy',email:'karthik@nexus.io',role:'Backend Developer',department:'Engineering',experience:7,salary:110000,skills:['Java','Spring Boot','Kafka','Redis'],status:'active',location:'Bangalore, IN',phone:'+91 32109 87654',joinDate:'2021-02-10',performance:88,empId:'EMP007'},
+  {name:'Meera Pillai',email:'meera@nexus.io',role:'ML Engineer',department:'Data Science',experience:3,salary:96000,skills:['PyTorch','Hugging Face','FastAPI'],status:'leave',location:'Trivandrum, IN',phone:'+91 21098 76543',joinDate:'2023-04-05',performance:85,empId:'EMP008'},
+];
+const SEED_PROJS=[
+  {name:'NexusERP v2.0',description:'Enterprise resource planning overhaul with microservices',stack:'React, Node.js, MongoDB',status:'Active',progress:68,teamSize:8,startDate:'2024-01-15',endDate:'2024-12-31'},
+  {name:'AI Analytics Platform',description:'Real-time analytics with ML-powered insights',stack:'Python, TensorFlow, Spark',status:'Active',progress:45,teamSize:5,startDate:'2024-03-01',endDate:'2025-03-01'},
+  {name:'DevSecOps Pipeline',description:'Automated CI/CD with integrated security scanning',stack:'Jenkins, Docker, Terraform, AWS',status:'Active',progress:82,teamSize:4,startDate:'2024-02-10',endDate:'2024-09-30'},
+  {name:'Mobile App Redesign',description:'Complete UX overhaul of the flagship mobile app',stack:'React Native, Figma',status:'Planning',progress:15,teamSize:3,startDate:'2024-06-01',endDate:'2024-11-30'},
+];
+const SEED_LEAVES=[
+  {empName:'Meera Pillai',type:'Sick Leave',fromDate:'2024-07-01',toDate:'2024-07-07',reason:'Medical procedure',status:'approved'},
+  {empName:'Sneha Iyer',type:'Annual Leave',fromDate:'2024-07-15',toDate:'2024-07-22',reason:'Family vacation',status:'pending'},
+  {empName:'Priya Mehta',type:'Comp Off',fromDate:'2024-07-10',toDate:'2024-07-11',reason:'Weekend support',status:'approved'},
+  {empName:'Karthik Reddy',type:'Annual Leave',fromDate:'2024-08-05',toDate:'2024-08-12',reason:'Personal travel',status:'pending'},
+];
+if(DB.col('employees').count()===0) SEED_EMPS.forEach(e=>DB.col('employees').insertOne({...e}));
+if(DB.col('projects').count()===0) SEED_PROJS.forEach(p=>DB.col('projects').insertOne({...p}));
+if(DB.col('leaves').count()===0) SEED_LEAVES.forEach(l=>DB.col('leaves').insertOne({...l}));
+
+// ── HELPERS ──
+const AC=['#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777','#2563eb','#65a30d'];
+const avatarColor=n=>{let h=0;for(let c of n)h=(h<<5)-h+c.charCodeAt(0);return AC[Math.abs(h)%AC.length];};
+const initials=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+const deptTag=d=>{const m={Engineering:'dev',QA:'qa',DevOps:'devops',Management:'mgr',Design:'design','Data Science':'data'};return`<span class="tag tag-${m[d]||'dev'}">${d}</span>`;};
+const statusBadge=s=>{const l={active:'Active',bench:'On Bench',leave:'On Leave'};return`<span class="status-dot ${s}">${l[s]||s}</span>`;};
+const perfColor=s=>s>=90?'var(--green)':s>=80?'var(--accent)':s>=70?'var(--accent3)':'var(--red)';
+
+// ════════════════════════════════════════
+//  AUTH FUNCTIONS
+// ════════════════════════════════════════
+let selectedRole = 'Admin';
+
+function goTo(pageId) {
+  document.querySelectorAll('.app-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function pickRole(el, role) {
+  selectedRole = role;
+  document.querySelectorAll('.role-opt').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+
+function showAlert(id, msg, type='error') {
+  const el = document.getElementById(id);
+  el.className = `auth-alert ${type} show`;
+  el.innerHTML = `<span>${type==='success'?'✅':'❌'}</span> ${msg}`;
+  setTimeout(()=>el.classList.remove('show'), 4000);
+}
+
+function checkPwStrength(val) {
+  const bars = ['pwb1','pwb2','pwb3','pwb4'];
+  const lbl = document.getElementById('pw-label');
+  bars.forEach(b=>document.getElementById(b).className='pw-bar');
+  if(!val){lbl.textContent='Enter a password';return;}
+  let score=0;
+  if(val.length>=8)score++;
+  if(/[A-Z]/.test(val))score++;
+  if(/[0-9]/.test(val))score++;
+  if(/[^A-Za-z0-9]/.test(val))score++;
+  const cls=['weak','weak','medium','strong'];
+  const labels=['Too short','Weak','Fair','Good','Strong!'];
+  for(let i=0;i<score;i++) document.getElementById(bars[i]).className=`pw-bar ${cls[Math.min(score-1,3)]}`;
+  lbl.textContent = labels[score];
+  lbl.style.color = score<=1?'var(--red)':score===2?'var(--accent3)':'var(--green)';
+}
+
+function validateEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+
+function handleLogin() {
+  const email = document.getElementById('lg-email').value.trim();
+  const pw = document.getElementById('lg-pw').value;
+  let valid = true;
+
+  document.getElementById('lg-email-grp').classList.remove('error');
+  document.getElementById('lg-pw-grp').classList.remove('error');
+
+  if(!validateEmail(email)){document.getElementById('lg-email-grp').classList.add('error');valid=false;}
+  if(!pw){document.getElementById('lg-pw-grp').classList.add('error');valid=false;}
+  if(!valid) return;
+
+  const btn = document.getElementById('login-btn');
+  btn.classList.add('loading'); btn.textContent = 'Signing in...';
+
+  setTimeout(()=>{
+    const users = getUsers();
+    // Also allow demo credentials
+    const demoMatch = email==='admin@nexushr.com' && pw==='Admin@123';
+    const userMatch = users.find(u=>u.email===email && u.password===simpleHash(pw));
+
+    if(demoMatch || userMatch) {
+      const user = userMatch || {name:'Admin User',email,role:'Admin',org:'NexusHR Demo'};
+      setCurrentUser(user);
+      updateSidebarUser(user);
+      goTo('page-app');
+      renderDashboard();
+      showToast(`Welcome back, ${user.name.split(' ')[0]}! 👋`,'success');
+    } else {
+      showAlert('login-alert','Invalid email or password. Try admin@nexushr.com / Admin@123');
+    }
+    btn.classList.remove('loading'); btn.textContent='Sign In to NexusHR';
+  }, 900);
+}
+
+function handleRegister() {
+  const fn=document.getElementById('rg-fn').value.trim();
+  const ln=document.getElementById('rg-ln').value.trim();
+  const email=document.getElementById('rg-email').value.trim();
+  const pw=document.getElementById('rg-pw').value;
+  const cpw=document.getElementById('rg-cpw').value;
+  const terms=document.getElementById('rg-terms').checked;
+  let valid=true;
+
+  ['rg-fn-grp','rg-ln-grp','rg-email-grp','rg-pw-grp','rg-cpw-grp'].forEach(id=>document.getElementById(id).classList.remove('error'));
+
+  if(!fn){document.getElementById('rg-fn-grp').classList.add('error');valid=false;}
+  if(!ln){document.getElementById('rg-ln-grp').classList.add('error');valid=false;}
+  if(!validateEmail(email)){document.getElementById('rg-email-grp').classList.add('error');valid=false;}
+  if(pw.length<8){document.getElementById('rg-pw-grp').classList.add('error');valid=false;}
+  if(pw!==cpw){document.getElementById('rg-cpw-grp').classList.add('error');document.getElementById('rg-cpw-err').textContent='Passwords do not match';valid=false;}
+  if(!terms){showAlert('reg-alert','Please accept the Terms of Service');return;}
+  if(!valid) return;
+
+  const users=getUsers();
+  if(users.find(u=>u.email===email)){showAlert('reg-alert','An account with this email already exists');return;}
+
+  const btn=document.getElementById('register-btn');
+  btn.classList.add('loading');btn.textContent='Creating account...';
+
+  setTimeout(()=>{
+    const user={
+      name:`${fn} ${ln}`, email,
+      password: simpleHash(pw),
+      role: selectedRole,
+      org: document.getElementById('rg-org').value||'My Organisation',
+      createdAt: new Date().toISOString()
+    };
+    users.push(user); saveUsers(users);
+    setCurrentUser(user);
+    updateSidebarUser(user);
+    showAlert('reg-alert',`Welcome, ${fn}! Account created successfully.`,'success');
+    setTimeout(()=>{goTo('page-app');renderDashboard();showToast(`Welcome to NexusHR, ${fn}! 🎉`,'success');},1200);
+    btn.classList.remove('loading');btn.textContent='Create Account & Get Started';
+  },1000);
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('nexushr_user');
+  goTo('page-login');
+  showToast('Signed out successfully','info');
+}
+
+function showForgot() {
+  showAlert('login-alert','Password reset link sent! Check your email.','success');
+}
+
+// Simple hash (for demo only — use bcrypt in production)
+function simpleHash(str) {
+  let h=5381;for(let i=0;i<str.length;i++)h=(h<<5)+h+str.charCodeAt(i);return h.toString(16);
+}
+
+function updateSidebarUser(user) {
+  document.getElementById('sb-name').textContent = user.name;
+  document.getElementById('sb-role').textContent = user.role || 'Admin';
+  document.getElementById('sb-avatar').textContent = initials(user.name);
+  document.getElementById('sb-avatar').style.background = avatarColor(user.name);
+}
+
+// Auto-login if session exists
+window.addEventListener('DOMContentLoaded',()=>{
+  const user = getCurrentUser();
+  if(user){ updateSidebarUser(user); goTo('page-app'); renderDashboard(); }
+});
+
+// ════════════════════════════════════════
+//  APP / DASHBOARD LOGIC
+// ════════════════════════════════════════
+let currentFilter='all', currentEditId=null, currentSkills=[], searchQuery='';
+
+function showPage(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('page-label').textContent={dashboard:'Dashboard',employees:'Employees',projects:'Projects',performance:'Performance',leave:'Leave Management',reports:'Reports'}[page]||page;
+  document.getElementById('add-btn').style.display=page==='employees'?'none':'inline-flex';
+  const actions={dashboard:renderDashboard,employees:renderEmployees,projects:renderProjects,performance:renderPerformance,leave:renderLeave,reports:renderReports};
+  if(actions[page]) actions[page]();
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  const emps=DB.col('employees').find(),projs=DB.col('projects').find(),leaves=DB.col('leaves').find({status:'approved'});
+  document.getElementById('stat-total').textContent=emps.length;
+  document.getElementById('stat-projects').textContent=projs.filter(p=>p.status==='Active').length;
+  document.getElementById('stat-leave').textContent=leaves.length;
+  document.getElementById('stat-perf').textContent=emps.length?(emps.reduce((s,e)=>s+(e.performance||0),0)/emps.length).toFixed(1):'—';
+  document.getElementById('db-doc-count').textContent=emps.length;
+  document.getElementById('emp-count-badge').textContent=emps.length;
+  document.getElementById('leave-count-badge').textContent=DB.col('leaves').find({status:'pending'}).length;
+  const recent=[...emps].sort((a,b)=>new Date(b.joinDate||b.createdAt)-new Date(a.joinDate||a.createdAt)).slice(0,5);
+  document.getElementById('recent-count').textContent=recent.length+' records';
+  document.getElementById('recent-table').innerHTML=recent.map(e=>`<tr onclick="showDetail('${e._id}')"><td><div class="emp-cell"><div class="emp-av" style="background:${avatarColor(e.name)}">${initials(e.name)}</div><div><div class="emp-name">${e.name}</div><div class="emp-id">${e.empId||''}</div></div></div></td><td style="font-size:12px;color:var(--text2)">${e.role}</td><td>${deptTag(e.department)}</td><td style="font-size:11px;color:var(--muted);font-family:var(--mono)">${e.joinDate||'—'}</td><td>${statusBadge(e.status)}</td></tr>`).join('');
+  const dc={};emps.forEach(e=>{dc[e.department]=(dc[e.department]||0)+1;});
+  const mx=Math.max(...Object.values(dc),1);
+  const cols=['var(--accent)','var(--accent2)','var(--accent3)','var(--green)','#ec4899','#f97316'];
+  document.getElementById('dept-chart').innerHTML=Object.entries(dc).sort((a,b)=>b[1]-a[1]).map(([d,c],i)=>`<div class="dept-row"><div class="dept-name">${d}</div><div class="dept-track"><div class="dept-fill" style="width:${(c/mx*100).toFixed(0)}%;background:${cols[i%cols.length]}">${c}</div></div><div class="dept-count">${c}</div></div>`).join('');
+}
+
+// ── EMPLOYEES ──
+function renderEmployees(){
+  let emps=DB.col('employees').find();
+  if(searchQuery)emps=emps.filter(e=>e.name.toLowerCase().includes(searchQuery)||(e.role||'').toLowerCase().includes(searchQuery)||(e.email||'').toLowerCase().includes(searchQuery));
+  if(currentFilter!=='all'){
+    if(['active','bench','leave'].includes(currentFilter))emps=emps.filter(e=>e.status===currentFilter);
+    else emps=emps.filter(e=>(e.role||'').toLowerCase().includes(currentFilter.toLowerCase())||(e.department||'').toLowerCase().includes(currentFilter.toLowerCase()));
+  }
+  document.getElementById('emp-table-count').textContent=emps.length+' records';
+  document.getElementById('emp-table').innerHTML=emps.length?emps.map(e=>`<tr onclick="showDetail('${e._id}')"><td><div class="emp-cell"><div class="emp-av" style="background:${avatarColor(e.name)}">${initials(e.name)}</div><div><div class="emp-name">${e.name}</div><div class="emp-id">${e.email}</div></div></div></td><td style="font-size:12px;color:var(--text2)">${e.role}</td><td>${deptTag(e.department)}</td><td><div class="skill-tags">${(e.skills||[]).slice(0,3).map(s=>`<span class="skill-tag" style="font-size:10px;padding:2px 7px">${s}</span>`).join('')}${(e.skills||[]).length>3?`<span style="font-size:10px;color:var(--muted)">+${e.skills.length-3}</span>`:''}</div></td><td style="font-family:var(--mono);font-size:12px">${e.experience||0}yr</td><td>${statusBadge(e.status)}</td><td><div class="actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick="openEditEmployee('${e._id}')">✏</button><button class="icon-btn" style="color:var(--red)" onclick="deleteEmployee('${e._id}')">🗑</button></div></td></tr>`).join(''):`<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🔍</div><p>No employees found</p></div></td></tr>`;
+}
+function filterEmp(f,el){currentFilter=f;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderEmployees();}
+function handleSearch(){searchQuery=document.getElementById('search-input').value.toLowerCase();renderEmployees();}
+
+// ── ADD/EDIT ──
+function openAddEmployee(){
+  currentEditId=null;currentSkills=[];
+  document.getElementById('modal-title').textContent='Add Employee';
+  ['fname','lname','email','exp','salary','location','phone','notes'].forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
+  document.getElementById('f-role').value='';document.getElementById('f-dept').value='';document.getElementById('f-status').value='active';
+  document.getElementById('f-joindate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-empid').value='EMP'+String(DB.col('employees').count()+1).padStart(3,'0');
+  renderSkillTags();document.getElementById('employee-modal').classList.add('open');
+}
+function openEditEmployee(id){
+  const e=DB.col('employees').find().find(x=>x._id===id);if(!e)return;
+  currentEditId=id;currentSkills=[...(e.skills||[])];
+  document.getElementById('modal-title').textContent='Edit Employee';
+  const p=e.name.split(' ');
+  document.getElementById('f-fname').value=p[0]||'';document.getElementById('f-lname').value=p.slice(1).join(' ')||'';
+  document.getElementById('f-empid').value=e.empId||'';document.getElementById('f-email').value=e.email||'';
+  document.getElementById('f-role').value=e.role||'';document.getElementById('f-dept').value=e.department||'';
+  document.getElementById('f-exp').value=e.experience||'';document.getElementById('f-salary').value=e.salary||'';
+  document.getElementById('f-joindate').value=e.joinDate||'';document.getElementById('f-status').value=e.status||'active';
+  document.getElementById('f-location').value=e.location||'';document.getElementById('f-phone').value=e.phone||'';
+  document.getElementById('f-notes').value=e.notes||'';renderSkillTags();
+  document.getElementById('employee-modal').classList.add('open');
+}
+function addSkill(){const v=document.getElementById('skill-input').value.trim();if(v&&!currentSkills.includes(v)){currentSkills.push(v);renderSkillTags();document.getElementById('skill-input').value='';}}
+function removeSkill(s){currentSkills=currentSkills.filter(x=>x!==s);renderSkillTags();}
+function renderSkillTags(){document.getElementById('skills-container').innerHTML=currentSkills.map(s=>`<span class="skill-tag">${s}<span class="remove" onclick="removeSkill('${s}')">×</span></span>`).join('');}
+document.getElementById('skill-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addSkill();}});
+
+function saveEmployee(){
+  const fn=document.getElementById('f-fname').value.trim(),ln=document.getElementById('f-lname').value.trim();
+  const em=document.getElementById('f-email').value.trim(),ro=document.getElementById('f-role').value,de=document.getElementById('f-dept').value;
+  if(!fn||!ln||!em||!ro||!de){showToast('Fill required fields','error');return;}
+  const doc={name:`${fn} ${ln}`,empId:document.getElementById('f-empid').value,email:em,role:ro,department:de,
+    experience:parseInt(document.getElementById('f-exp').value)||0,salary:parseInt(document.getElementById('f-salary').value)||0,
+    joinDate:document.getElementById('f-joindate').value,status:document.getElementById('f-status').value,
+    location:document.getElementById('f-location').value,phone:document.getElementById('f-phone').value,
+    notes:document.getElementById('f-notes').value,skills:[...currentSkills],performance:Math.floor(Math.random()*20)+75};
+  if(currentEditId){DB.col('employees').updateOne({_id:currentEditId},{$set:doc});showToast(`✅ ${doc.name} updated`,'success');}
+  else{DB.col('employees').insertOne(doc);showToast(`✅ ${doc.name} added to MongoDB`,'success');}
+  closeModal('employee-modal');renderDashboard();renderEmployees();
+}
+function deleteEmployee(id){
+  const e=DB.col('employees').find().find(x=>x._id===id);if(!e)return;
+  if(!confirm(`Delete ${e.name}?`))return;
+  DB.col('employees').deleteOne({_id:id});showToast(`🗑 ${e.name} removed`,'info');renderEmployees();renderDashboard();
+}
+
+// ── DETAIL ──
+function showDetail(id){
+  const e=DB.col('employees').find().find(x=>x._id===id);if(!e)return;
+  document.getElementById('detail-body').innerHTML=`
+    <div class="detail-header">
+      <div class="detail-av" style="background:${avatarColor(e.name)}">${initials(e.name)}</div>
+      <div><div class="detail-name">${e.name}</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:5px">${deptTag(e.department)} ${statusBadge(e.status)}</div>
+      <div class="detail-meta"><span>📧 ${e.email}</span><span>📱 ${e.phone||'—'}</span><span>📍 ${e.location||'—'}</span></div></div>
+    </div>
+    <div class="detail-grid" style="margin-bottom:16px">
+      ${[['Employee ID',e.empId||'—'],['Role',e.role],['Experience',e.experience+' years'],['Salary','$'+Number(e.salary||0).toLocaleString()],['Join Date',e.joinDate||'—'],['Performance',e.performance+'/100']].map(([l,v])=>`<div class="detail-field"><div class="detail-field-lbl">${l}</div><div class="detail-field-val">${v}</div></div>`).join('')}
+    </div>
+    <div style="margin-bottom:14px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Skills</div>
+    <div class="skill-tags">${(e.skills||[]).map(s=>`<span class="skill-tag">${s}</span>`).join('')||'—'}</div></div>
+    <div style="padding:10px 13px;background:var(--surface2);border-radius:7px;font-family:var(--mono);font-size:10px;color:var(--muted)">
+      <span style="color:var(--accent)">_id:</span> "${e._id.slice(-12)}..." &nbsp;·&nbsp; <span style="color:var(--accent)">createdAt:</span> "${(e.createdAt||'').substring(0,10)}"
+    </div>`;
+  document.getElementById('detail-edit-btn').onclick=()=>{closeModal('detail-modal');openEditEmployee(id);};
+  document.getElementById('detail-delete-btn').onclick=()=>{closeModal('detail-modal');deleteEmployee(id);};
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+// ── PROJECTS ──
+function renderProjects(){
+  const projs=DB.col('projects').find();
+  const sc={'Active':'var(--green)','Planning':'var(--accent)','On Hold':'var(--accent3)','Completed':'var(--muted)'};
+  document.getElementById('projects-grid').innerHTML=projs.length?projs.map(p=>`<div class="project-card"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px"><div><div class="project-name">${p.name}</div><div class="project-desc">${p.description}</div></div><span style="font-size:10px;padding:3px 9px;border-radius:4px;background:rgba(0,0,0,0.3);color:${sc[p.status]||'var(--muted)'};margin-left:10px;white-space:nowrap;flex-shrink:0">${p.status}</span></div><div style="font-size:11px;color:var(--muted);margin-bottom:12px">🛠 ${p.stack||'—'}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px"><span>Progress</span><span style="font-family:var(--mono)">${p.progress||0}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${p.progress||0}%;background:${(p.progress||0)>70?'var(--green)':(p.progress||0)>40?'var(--accent)':'var(--accent3)'}"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><div style="font-size:11px;color:var(--muted)">📅 ${p.startDate||'—'}</div><div style="font-size:11px;color:var(--muted)">👥 ${p.teamSize||0} members</div></div></div>`).join(''):`<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🚀</div><p>No projects yet</p></div>`;
+}
+function openAddProject(){['name','desc','stack','progress','team'].forEach(f=>document.getElementById('p-'+f).value='');document.getElementById('p-status').value='Active';document.getElementById('p-start').value=new Date().toISOString().split('T')[0];document.getElementById('p-end').value='';document.getElementById('project-modal').classList.add('open');}
+function saveProject(){const n=document.getElementById('p-name').value.trim();if(!n){showToast('Name required','error');return;}DB.col('projects').insertOne({name:n,description:document.getElementById('p-desc').value,stack:document.getElementById('p-stack').value,status:document.getElementById('p-status').value,progress:parseInt(document.getElementById('p-progress').value)||0,teamSize:parseInt(document.getElementById('p-team').value)||1,startDate:document.getElementById('p-start').value,endDate:document.getElementById('p-end').value});showToast(`🚀 "${n}" saved`,'success');closeModal('project-modal');renderProjects();}
+
+// ── PERFORMANCE ──
+function renderPerformance(){
+  const emps=[...DB.col('employees').find()].sort((a,b)=>(b.performance||0)-(a.performance||0));
+  document.getElementById('perf-list').innerHTML=emps.map(e=>`<div class="perf-row"><div class="perf-emp"><div class="emp-av" style="background:${avatarColor(e.name)};width:30px;height:30px;font-size:10px">${initials(e.name)}</div><div><div style="font-size:13px;font-weight:600">${e.name}</div><div style="font-size:11px;color:var(--muted)">${e.role}</div></div></div><div class="perf-bar-wrap"><div class="perf-bar" style="width:${e.performance||0}%;background:${perfColor(e.performance||0)}"></div></div><div class="perf-score" style="color:${perfColor(e.performance||0)}">${e.performance||0}</div></div>`).join('');
+  const bands=[{l:'Excellent (90-100)',min:90,max:100,c:'var(--green)'},{l:'Good (80-89)',min:80,max:89,c:'var(--accent)'},{l:'Average (70-79)',min:70,max:79,c:'var(--accent3)'},{l:'Below Avg (<70)',min:0,max:69,c:'var(--red)'}];
+  document.getElementById('score-dist').innerHTML=bands.map(b=>{const c=emps.filter(e=>(e.performance||0)>=b.min&&(e.performance||0)<=b.max).length;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>${b.l}</span><span style="font-family:var(--mono)">${c}</span></div><div style="height:4px;background:var(--border2);border-radius:2px"><div style="height:100%;width:${(c/Math.max(emps.length,1)*100).toFixed(0)}%;background:${b.c};border-radius:2px"></div></div></div>`;}).join('');
+  if(emps.length){const t=emps[0],l=emps[emps.length-1];document.getElementById('perf-highlights').innerHTML=`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:17px">🏆</span><div><div style="font-size:11px;color:var(--muted)">Top Performer</div><div style="font-weight:700;font-size:13px">${t.name}</div><div style="font-size:11px;color:var(--green);font-family:var(--mono)">${t.performance}/100</div></div></div><div style="display:flex;gap:10px;padding:10px 0"><span style="font-size:17px">📈</span><div><div style="font-size:11px;color:var(--muted)">Needs Coaching</div><div style="font-weight:700;font-size:13px">${l.name}</div><div style="font-size:11px;color:var(--accent3);font-family:var(--mono)">${l.performance}/100</div></div></div>`;}
+}
+
+// ── LEAVE ──
+function renderLeave(){
+  const leaves=DB.col('leaves').find(),emps=DB.col('employees').find();
+  document.getElementById('l-emp').innerHTML=emps.map(e=>`<option value="${e._id}">${e.name} (${e.empId||''})</option>`).join('');
+  document.getElementById('leave-count-badge').textContent=leaves.filter(l=>l.status==='pending').length;
+  document.getElementById('leave-list').innerHTML=leaves.length?leaves.map(l=>`<div class="leave-item leave-type-${l.status}"><div class="leave-emp"><div class="leave-emp-name">${l.empName||'—'}</div><div class="leave-dates">${l.type} · ${l.fromDate||'—'} → ${l.toDate||'—'}</div>${l.reason?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${l.reason}</div>`:''}</div><span class="leave-badge lb-${l.status}">${l.status}</span>${l.status==='pending'?`<button class="icon-btn" style="color:var(--green)" onclick="updateLeaveStatus('${l._id}','approved')">✓</button><button class="icon-btn" style="color:var(--red)" onclick="updateLeaveStatus('${l._id}','rejected')">✕</button>`:''}</div>`).join(''):`<div class="empty-state"><div class="empty-icon">📅</div><p>No leave requests</p></div>`;
+  const sum={pending:0,approved:0,rejected:0};leaves.forEach(l=>sum[l.status]=(sum[l.status]||0)+1);
+  document.getElementById('leave-summary').innerHTML=Object.entries(sum).map(([k,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><span class="leave-badge lb-${k}">${k}</span><span style="font-family:var(--mono);font-size:17px;font-weight:700">${v}</span></div>`).join('');
+}
+function updateLeaveStatus(id,s){DB.col('leaves').updateOne({_id:id},{$set:{status:s}});showToast(`Leave ${s}`,s==='approved'?'success':'info');renderLeave();renderDashboard();}
+function openAddLeave(){document.getElementById('leave-modal').classList.add('open');}
+function saveLeave(){const el=document.getElementById('l-emp');const nm=el.options[el.selectedIndex]?.text?.split(' (')[0]||'—';DB.col('leaves').insertOne({empName:nm,empId:el.value,type:document.getElementById('l-type').value,fromDate:document.getElementById('l-from').value,toDate:document.getElementById('l-to').value,reason:document.getElementById('l-reason').value,status:document.getElementById('l-status').value});showToast('Leave request submitted','success');closeModal('leave-modal');renderLeave();}
+
+// ── REPORTS ──
+function renderReports(){
+  const emps=DB.col('employees').find();
+  const dm={};emps.forEach(e=>{dm[e.department]=(dm[e.department]||[]).concat(e);});
+  const sm={};emps.forEach(e=>(e.skills||[]).forEach(s=>{sm[s]=(sm[s]||0)+1;}));
+  const topSk=Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  document.getElementById('reports-content').innerHTML=`
+    <div class="perf-card">
+      <h3>Headcount by Department</h3>
+      <div class="dept-bars">${Object.entries(dm).sort((a,b)=>b[1].length-a[1].length).map(([d,m])=>{const mx=Math.max(...Object.values(dm).map(v=>v.length),1);const aS=m.reduce((s,e)=>s+(e.salary||0),0)/m.length;return`<div class="dept-row"><div class="dept-name">${d}</div><div class="dept-track"><div class="dept-fill" style="width:${(m.length/mx*100).toFixed(0)}%;background:var(--accent2)">${m.length}</div></div><div style="font-size:10px;color:var(--muted);width:75px;font-family:var(--mono)">$${Math.round(aS/1000)}k avg</div></div>`;}).join('')}</div>
+    </div>
+    <div class="perf-card">
+      <h3>Top Skills in Workforce</h3>
+      <div class="dept-bars">${topSk.map(([sk,c])=>`<div class="dept-row"><div class="dept-name">${sk}</div><div class="dept-track"><div class="dept-fill" style="width:${(c/topSk[0][1]*100).toFixed(0)}%;background:var(--accent)">${c}</div></div></div>`).join('')}</div>
+    </div>
+    <div class="perf-card">
+      <h3>MongoDB · Aggregation Example</h3>
+      <div class="report-code">
+        <span style="color:var(--muted)">// Department analytics</span><br>
+        db.employees.aggregate([<br>&nbsp;&nbsp;{&nbsp;<span style="color:#a78bfa">$group</span>:&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;_id:&nbsp;"$department",<br>&nbsp;&nbsp;&nbsp;&nbsp;count:&nbsp;{&nbsp;<span style="color:#a78bfa">$sum</span>:&nbsp;1&nbsp;},<br>&nbsp;&nbsp;&nbsp;&nbsp;avgSalary:&nbsp;{&nbsp;<span style="color:#a78bfa">$avg</span>:&nbsp;"$salary"&nbsp;}<br>&nbsp;&nbsp;}&nbsp;},<br>&nbsp;&nbsp;{&nbsp;<span style="color:#a78bfa">$sort</span>:&nbsp;{&nbsp;count:&nbsp;-1&nbsp;}&nbsp;}<br>])
+      </div>
+      ${Object.entries(dm).map(([d,m])=>{const aS=m.reduce((s,e)=>s+(e.salary||0),0)/m.length;return`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--accent)">"${d}"</span><span>count:&nbsp;<strong>${m.length}</strong></span><span style="color:var(--muted);font-family:var(--mono)">$${Math.round(aS).toLocaleString()}</span></div>`;}).join('')}
+    </div>
+    <div class="perf-card">
+      <h3>Workforce Summary</h3>
+      ${[['Total Headcount',emps.length],['Avg Experience',(emps.reduce((s,e)=>s+(e.experience||0),0)/Math.max(emps.length,1)).toFixed(1)+' yrs'],['Avg Salary','$'+(emps.reduce((s,e)=>s+(e.salary||0),0)/Math.max(emps.length,1)/1000).toFixed(1)+'k'],['Active',emps.filter(e=>e.status==='active').length],['On Bench',emps.filter(e=>e.status==='bench').length],['On Leave',emps.filter(e=>e.status==='leave').length],['Departments',Object.keys(dm).length],['Avg Performance',(emps.reduce((s,e)=>s+(e.performance||0),0)/Math.max(emps.length,1)).toFixed(1)+'/100']].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--muted)">${k}</span><span style="font-family:var(--mono);font-size:14px;font-weight:700">${v}</span></div>`).join('')}
+    </div>`;
+}
+
+// ── QUERY CONSOLE ──
+function runQuery(){
+  const coll=document.getElementById('q-coll').value,raw=document.getElementById('q-query').value.trim();
+  let q={};try{if(raw)q=eval('('+raw+')');}catch(e){showToast('Invalid JSON','error');return;}
+  const res=DB.col(coll).find(q);
+  document.getElementById('q-result').innerHTML=`<span style="color:var(--muted)">// ${res.length} document(s) found</span>\n\n`+JSON.stringify(res.slice(0,3),null,2).replace(/"([^"]+)":/g,'<span style="color:#a78bfa">"$1"</span>:').replace(/: "([^"]+)"/g,': <span style="color:#fcd34d">"$1"</span>')+(res.length>3?`\n<span style="color:var(--muted)">... and ${res.length-3} more</span>`:'');
+}
+
+// ── EXPORT ──
+function exportCSV(){const emps=DB.col('employees').find();const h=['Name','Email','EmpID','Role','Department','Experience','Salary','Status','Join Date','Skills'];const rows=emps.map(e=>[e.name,e.email,e.empId,e.role,e.department,e.experience,e.salary,e.status,e.joinDate,(e.skills||[]).join(';')]);const csv=[h,...rows].map(r=>r.map(v=>`"${v||''}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='nexushr_employees.csv';a.click();showToast('CSV exported','success');}
+
+// ── MODALS ──
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ── TOAST ──
+function showToast(msg,type='info'){
+  const t=document.createElement('div');t.className=`toast ${type}`;
+  t.innerHTML=`<span>${{success:'✅',error:'❌',info:'ℹ️'}[type]||'💬'}</span> ${msg}`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>{t.style.cssText='opacity:0;transform:translateX(100%);transition:all 0.3s';setTimeout(()=>t.remove(),320);},3200);
+}
+</script>
+</body>
+</html>
